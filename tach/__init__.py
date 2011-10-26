@@ -17,9 +17,10 @@ def _load_config(config_path):
         other_config = {'carbon_host': config.get('graphite.config',
                                                   'carbon_host'),
                         'carbon_port': config.getint('graphite.config',
-                                               'carbon_port')
+                                               'carbon_port')}
     return to_decorate, other_config
 
 def patch(config_path):
-    for k, m, e, o in _load_config(config_path):
-        patcher.decorate_method(k, m, e, o)
+    to_decorate, other_config = _load_config(config_path)
+    for k, m, e in to_decorate:
+        patcher.decorate_method(k, m, e, other_config)

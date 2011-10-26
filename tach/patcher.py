@@ -9,7 +9,9 @@ def _decorate(method, metric, config):
     metric_method = None
     decorator_name = "_%s" % metric
     metric_method = getattr(decorator, decorator_name)
-    metric_method = functools.partial(metric_method, method, config)
+    args = {'method': method,
+            'config': config}
+    metric_method = functools.partial(metric_method, **args)
     metric_method.__name__ = method.__name__
     metric_method.__doc__ = method.__doc__
     return metric_method
