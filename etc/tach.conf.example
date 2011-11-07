@@ -1,0 +1,4 @@
+[foo.whatever]
+module = test.Derp
+method = foo
+metric = datetime

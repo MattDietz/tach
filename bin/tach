@@ -1,0 +1,18 @@
+#!/usr/bin/python
+
+import os
+import sys
+
+possible_topdir = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
+                                   os.pardir,
+                                   os.pardir))
+if os.path.exists(os.path.join(possible_topdir, 'tach', '__init__.py')):
+    sys.path.insert(0, possible_topdir)
+
+import tach
+
+if __name__ == '__main__':
+    config_path = sys.argv[1]
+    script_path = sys.argv[2]
+    tach.patch(config_path)
+    execfile(script_path)
