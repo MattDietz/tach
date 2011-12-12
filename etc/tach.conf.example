@@ -1,4 +1,20 @@
+# The section name is irrelevant
 [foo.whatever]
 module = test.Derp
 method = foo
 metric = datetime
+# This method has to mimick the method signature of the one we're patching
+app_path = path.to.some.module
+app = method_to_call
+
+[otherguy.runsomecrap]
+module = bar.Baz
+method = run_script
+metric = graphite
+app_path = path.to.some.module
+app = method_to_call
+
+[graphite.config]
+carbon_host = 127.0.0.1
+carbon_port = 2003
+
