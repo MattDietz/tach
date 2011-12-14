@@ -1,28 +1,18 @@
 import time
 import socket
 
-def _time(*args, **kwargs):
-    t1 = time.time()
-    result = method(*args, **kwargs)
-    print "---- Execution time: %s" % str(time.time() - t1)
-    return result
+def _time(value, metric, config):
+    print "---- Execution time: %s" % value
 
-def _graphite(*args, **kwargs):
-    method = kwargs['method']
-    config = kwargs['config']
-    t1 = time.time()
-    result = method(*args, **kwargs)
-    now = time.time()
-    delta = now - t1
-
-    sock = socket()
+def _graphite(value, metric_label, config):
+    sock = socket.socket()
     carbon_connection = (config['carbon_host'], config['carbon_port'])
     try:
         sock.connect(carbon_connection)
     except sock.error, e:
         print "Error connecting to graphite server on %s:%s" %\
                     carbon_connection
-    lines.append("hurr.durr %s %d" % (delta, now))
-    message = '\n'.join(lines) + '\n' #all lines must end in a newline
-    sock.sendall(message)
-    return result
+    #When wouldn't this be true?
+    now = int(time.time())
+    body = "%s %s %d\n" % (metric_label, value, now)
+    sock.sendall(body)
