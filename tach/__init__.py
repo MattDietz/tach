@@ -8,7 +8,7 @@ def load_config(config_path):
     to_decorate = []
     other_config = None
     for sec in config.sections():
-        if not sec == 'graphite.config':
+        if not sec == 'graphite.config' and not sec == 'statsd.config':
             method_dict = {'module': config.get(sec, 'module'),
                            'method': config.get(sec, 'method'),
                            'metric': config.get(sec, 'metric')}
@@ -21,7 +21,12 @@ def load_config(config_path):
         other_config = {'carbon_host': config.get('graphite.config',
                                                   'carbon_host'),
                         'carbon_port': config.getint('graphite.config',
-                                               'carbon_port')}
+                                                     'carbon_port')}
+    if config.has_section('statsd.config'):
+        other_config = {'statsd_host': config.get('statsd.config',
+                                                  'statsd_host'),
+                        'statsd_port': config.getint('statsd.config',
+                                                     'statsd_port')}
     return to_decorate, other_config
 
 def patch(config_path):

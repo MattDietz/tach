@@ -6,8 +6,7 @@ from tach import utils
 
 
 def _decorate(method, metric, config, metric_label, app=None):
-    decorator_name = "_%s" % metric
-    metric_method = getattr(decorator, decorator_name)
+    metric_method = getattr(decorator, metric)
     def _decorated(*args, **kwargs):
         label = None
         if app:

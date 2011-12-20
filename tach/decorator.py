@@ -1,18 +1,29 @@
 import time
 import socket
 
-def _time(value, metric, config):
+def _connect_and_send(host, port, body):
+    sock.sendall(body)
+
+def timer(value, metric, config):
     print "---- Execution time: %s" % value
 
-def _graphite(value, metric_label, config):
+def graphite(value, metric_label, config):
     sock = socket.socket()
-    carbon_connection = (config['carbon_host'], config['carbon_port'])
-    try:
-        sock.connect(carbon_connection)
-    except sock.error, e:
-        print "Error connecting to graphite server on %s:%s" %\
-                    carbon_connection
-    #When wouldn't this be true?
     now = int(time.time())
     body = "%s %s %d\n" % (metric_label, value, now)
-    sock.sendall(body)
+    try:
+        sock.connect((config['carbon_host'],
+                      config['carbon_port']))
+        sock.sendall(body)
+    except socket.error, e:
+        print "Error connecting to graphite server %s" % e
+
+def statsd_timer(value, metric_label, config):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    body = "%s:%s|ms" % (metric_label, value*1000.0)
+    try:
+        sock.connect((config['statsd_host'],
+                      config['statsd_port']))
+        sock.sendall(body)
+    except socket.error, e:
+        print "Error connecting to statsd server %s" % e
