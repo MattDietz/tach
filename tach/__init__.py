@@ -3,6 +3,7 @@ from ConfigParser import SafeConfigParser
 from tach import notifiers
 from tach import patcher
 
+
 def load_config(config_path):
     """Load configuration from config_path."""
 
@@ -55,6 +56,7 @@ def load_config(config_path):
             to_decorate.append(method_dict)
 
     return to_decorate, other_config
+
 
 def patch(config_path):
     """Patch application based on configuration."""
