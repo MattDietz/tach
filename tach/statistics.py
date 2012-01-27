@@ -4,8 +4,9 @@ import time
 class Statistic(object):
     """Base class for all statistics.
 
-    Subclasses must implement __call__(); it should take no arguments,
-    stop the collection, and return the final statistic value.
+    Subclasses must implement __call__(); it should take as an
+    argument the return value of the start() method (by default,
+    None); stop the collection; and return the final statistic value.
     """
 
     def __init__(self, config):
@@ -29,12 +30,12 @@ class ExecTime(Statistic):
     def start(self):
         """Start collecting the statistic."""
 
-        self.start_time = time.time()
+        return time.time()
 
-    def __call__(self):
+    def __call__(self, value):
         """Finish collecting the statistic and return the value."""
 
-        return time.time() - self.start_time
+        return value - self.start_time
 
 
 class Increment(Statistic):
@@ -47,7 +48,7 @@ class Increment(Statistic):
 
         self.increment = config.get('increment', 1)
 
-    def __call__(self):
+    def __call__(self, value):
         """Finish collecting the statistic and return the value."""
 
         return self.increment
