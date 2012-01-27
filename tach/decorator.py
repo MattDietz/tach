@@ -27,3 +27,23 @@ def statsd_timer(value, metric_label, config):
         sock.sendall(body)
     except socket.error, e:
         print "Error connecting to statsd server %s" % e
+
+def statsd_incr(value, metric_label, config):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    body = "%s:1|c" % (metric_label,)
+    try:
+        sock.connect((config['statsd_host'],
+                      config['statsd_port']))
+        sock.sendall(body)
+    except socket.error, e:
+        print "Error connecting to statsd server %s" % e
+
+def statsd_decr(value, metric_label, config):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    body = "%s:-1|c" % (metric_label,)
+    try:
+        sock.connect((config['statsd_host'],
+                      config['statsd_port']))
+        sock.sendall(body)
+    except socket.error, e:
+        print "Error connecting to statsd server %s" % e
