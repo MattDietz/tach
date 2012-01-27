@@ -2,8 +2,8 @@ import ConfigParser
 import inspect
 import functools
 
+from tach import metrics
 from tach import notifiers
-from tach import statistics
 from tach import utils
 
 
@@ -282,13 +282,13 @@ class Method(object):
         if not self._metric_cache:
             if self._metric in ('timer', 'graphite', 'statsd_timer'):
                 # These all handled execution times
-                self._metric_cache = statistics.ExecTime({})
+                self._metric_cache = metrics.ExecTime({})
             elif self._metric == 'statsd_incr':
                 # This was an increment operation
-                self._metric_cache = statistics.Increment(dict(increment=1))
+                self._metric_cache = metrics.Increment(dict(increment=1))
             elif self._metric == 'statsd_decr':
                 # This was a decrement operation
-                self._metric_cache = statistics.Increment(dict(increment=-1))
+                self._metric_cache = metrics.Increment(dict(increment=-1))
             else:
                 # New-style config; select an appropriate statistic
                 cls = utils.import_class_or_module(self._metric)
