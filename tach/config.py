@@ -55,6 +55,30 @@ class Config(object):
         # Return the driver
         return notifier.driver
 
+    def _methods(self, methods):
+        """Return a list of method objects given their names."""
+
+        # If we were given none, assume all
+        if not methods:
+            return self.methods.values()
+        else:
+            return [self.methods[meth] for meth in methods
+                    if meth in self.methods]
+
+    def install(self, *methods):
+        """Install the given metric gatherers."""
+
+        # Call their install methods
+        for meth in self._methods(methods):
+            meth.install()
+
+    def uninstall(self, *methods):
+        """Uninstall the given metric gatherers."""
+
+        # Call their uninstall methods
+        for meth in self._methods(methods):
+            meth.uninstall()
+
 
 class Notifier(object):
     """Represent a notifier."""
@@ -167,7 +191,7 @@ def _get_method(cls, name):
         kind = "data"
 
     # Return the object and its kind
-    return obj, kind
+    return obj, raw_obj, kind
 
 
 class Method(object):
@@ -219,7 +243,7 @@ class Method(object):
 
         # Grab the method we're operating on
         method_cls = utils.import_class_or_module(self._module)
-        method, kind = _get_method(method_cls, self._method)
+        method, raw_method, kind = _get_method(method_cls, self._method)
         self._method_cache = method
 
         # We need to wrap the replacement if its a static or class
@@ -232,7 +256,7 @@ class Method(object):
             meth_wrap = lambda f: f
 
         # Wrap the method to perform statistics collection
-        @functools.wraps(self._method_cache)
+        @functools.wraps(method)
         def wrapper(*args, **kwargs):
             # Handle app translation
             label = None
@@ -242,22 +266,34 @@ class Method(object):
             # Run the method, bracketing with statistics collection
             # and notification
             value = self.metric.start()
-            result = self._method_cache(*args, **kwargs)
-            self.notifier(self.metric(value), label or self.label, self.config)
+            result = method(*args, **kwargs)
+            self.notifier(self.metric(value), label or self.label)
 
             return result
 
         # Save some introspecting data
         wrapper.tach_descriptor = self
-        wrapper.tach_function = self._method_cache
+        wrapper.tach_function = method
 
-        # Update the class with the wrapper
-        setattr(method_cls, self._method, meth_wrap(wrapper))
+        # Save what we need
+        self._method_cls = method_cls
+        self._method_wrapper = meth_wrap(wrapper)
+        self._method_orig = raw_method
 
     def __getitem__(self, key):
         """Allow access to additional configuration."""
 
         return self.additional[key]
+
+    def install(self):
+        """Install the metric collector."""
+
+        setattr(self._method_cls, self._method, self._method_wrapper)
+
+    def uninstall(self):
+        """Uninstall the metric collector."""
+
+        setattr(self._method_cls, self._method, self._method_orig)
 
     @property
     def method(self):

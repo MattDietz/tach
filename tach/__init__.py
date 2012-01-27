@@ -4,5 +4,11 @@ from tach import config
 def patch(config_path):
     """Patch application based on configuration."""
 
-    # Simply loading the configuration will do the trick
-    return config.Config(config_path)
+    # Load the configuration
+    cfg = config.Config(config_path)
+
+    # Install all the metric gatherers
+    cfg.install()
+
+    # Return the configuration
+    return cfg
