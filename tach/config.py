@@ -27,7 +27,7 @@ class Config(object):
         # Process configuration
         for sec in config.sections():
             if (sec in ('graphite.config', 'statsd.config') or
-                sec.startswith('notifier:')):
+                sec == 'notifier' or sec.startswith('notifier:')):
                 # Make a notifier
                 notifier = Notifier(self, sec, config.items(sec))
 
