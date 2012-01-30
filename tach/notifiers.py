@@ -23,7 +23,9 @@ class BaseNotifier(object):
         # Get the value formatter for the value type
         meth = getattr(self, value.type, None)
         if not meth:
-            return
+            meth = getattr(self, 'default', None)
+            if not meth:
+                return
 
         # Format the value into a body
         body = meth(value, label)
@@ -50,6 +52,11 @@ class PrintNotifier(BaseNotifier):
         """Format increment/decrement."""
 
         return "Increment %s: %s" % (label, value)
+
+    def default(self, value, label):
+        """Format default string."""
+
+        return "Metric %s: %s" % (label, value)
 
 
 class SocketNotifier(BaseNotifier):
@@ -156,13 +163,8 @@ class SocketNotifier(BaseNotifier):
 class GraphiteNotifier(SocketNotifier):
     """Simple Graphite notifier."""
 
-    def exec_time(self, value, label):
-        """Format execution time."""
-
-        return "%s %s %d\n" % (label, value, int(time.time()))
-
-    def increment(self, value, label):
-        """Format increment/decrement."""
+    def default(self, value, label):
+        """Format metric submission."""
 
         return "%s %s %d\n" % (label, value, int(time.time()))
 
