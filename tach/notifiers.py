@@ -72,8 +72,8 @@ class SocketNotifier(BaseNotifier):
         """
 
         super(SocketNotifier, self).__init__(config)
-        self.hostattr = hostattr
-        self.portattr = portattr
+        self.host = config[hostattr]
+        self.port = int(config[portattr])
 
         # Save the socket
         self._sock = None
@@ -103,11 +103,6 @@ class SocketNotifier(BaseNotifier):
                 # Body successfully sent
                 break
 
-    def get_params(self):
-        """Retrieve host and port from configuration."""
-
-        return self.config[self.hostattr], int(self.config[self.portattr])
-
     @property
     def sock(self):
         """Retrieve a socket for the server.
@@ -116,9 +111,6 @@ class SocketNotifier(BaseNotifier):
         """
 
         if not self._sock:
-            # Get the host and port
-            host, port = self.get_params()
-
             # TCP or UDP?
             if getattr(self, 'sock_type', 'tcp') == 'udp':
                 sock_type = socket.SOCK_DGRAM
@@ -130,9 +122,10 @@ class SocketNotifier(BaseNotifier):
 
             # Connect the socket
             try:
-                sock.connect((host, port))
+                sock.connect((self.host, self.port))
             except socket.error as e:
-                print "Error connecting to server: %s" % e
+                print ("Error connecting to server %s port %s: %s" %
+                       (self.host, self.port, e))
                 return None
 
             # Save the created socket
