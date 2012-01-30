@@ -151,7 +151,12 @@ class Notifier(object):
 
 
 def _get_method(cls, name):
-    """Introspect a class for a method and its kind."""
+    """Introspect a class for a method and its kind.
+
+    This is copied from the heart of inspect.classify_class_attrs(),
+    with the difference that we're only concerned about a single
+    attribute of the class.
+    """
 
     mro = inspect.getmro(cls)
 
@@ -243,7 +248,11 @@ class Method(object):
 
         # Grab the method we're operating on
         method_cls = utils.import_class_or_module(self._module)
-        method, raw_method, kind = _get_method(method_cls, self._method)
+        if inspect.ismodule(method_cls):
+            method = raw_method = getattr(method_cls, self._method)
+            kind = 'function'
+        else:
+            method, raw_method, kind = _get_method(method_cls, self._method)
         self._method_cache = method
 
         # We need to wrap the replacement if its a static or class
