@@ -16,7 +16,7 @@ class BaseNotifier(object):
     def __call__(self, value, label):
         """Causes the metric to be formatted and sent.
 
-        Subclasses must implement methods for statistic types and the
+        Subclasses must implement methods for metric types and the
         send() method.
         """
 
