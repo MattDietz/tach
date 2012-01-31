@@ -35,7 +35,7 @@ class ExecTime(Metric):
     def __call__(self, value):
         """Finish collecting the metric and return the value."""
 
-        return value - self.start_time
+        return time.time() - value
 
 
 class Increment(Metric):
