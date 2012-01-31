@@ -1,5 +1,7 @@
 import time
 
+from tach import utils
+
 
 class Metric(object):
     """Base class for all metrics.

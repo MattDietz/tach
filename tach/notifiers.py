@@ -1,6 +1,8 @@
 import socket
 import time
 
+from tach import utils
+
 
 class BaseNotifier(object):
     """Base notifier class."""
