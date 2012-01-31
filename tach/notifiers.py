@@ -13,11 +13,10 @@ class BaseNotifier(object):
 
         self.config = config
 
-    def __call__(self, value, vtype, label):
-        """Causes the metric to be formatted and sent.
+    def format(self, value, vtype, label):
+        """Format the value.
 
-        Subclasses must implement methods for metric types and the
-        send() method.
+        Subclasses must implement methods for metric types.
         """
 
         # Get the value formatter for the value type
@@ -28,10 +27,17 @@ class BaseNotifier(object):
                 return
 
         # Format the value into a body
-        body = meth(value, label)
+        return meth(value, label)
+
+    def __call__(self, value, vtype, label):
+        """Causes the metric to be formatted and sent.
+
+        Subclasses must implement methods for metric types and the
+        send() method.
+        """
 
         # Send the message
-        self.send(body)
+        self.send(self.format(value, vtype, label))
 
 
 class PrintNotifier(BaseNotifier):
@@ -57,6 +63,39 @@ class PrintNotifier(BaseNotifier):
         """Format default string."""
 
         return "Metric %s: %s" % (label, value)
+
+
+class DebugNotifier(BaseNotifier):
+    """Debug notifier.
+
+    Use the "real_driver" configuration option to specify the notifier
+    to wrap.
+    """
+
+    def __init__(self, config):
+        """Initialize the notifier from the configuration."""
+
+        # First, figure out the real notifier
+        self.driver_name = config['real_driver']
+
+        # Get the class and instantiate it
+        cls = utils.import_class_or_module(self.driver_name)
+        self.driver = cls(config)
+
+    def __call__(self, value, vtype, label):
+        """Causes the metric to be formatted and sent."""
+
+        # Format the value
+        body = self.driver.format(value, vtype, label)
+
+        # Output debugging information
+        print "*" * 80
+        print "Debug: Notifying %r of message %r" % (self.driver_name, body)
+        print "Debug: Raw value of type %r: %r" % (vtype, value)
+        print "Debug: Statistic label: %r" % label
+        print "*" * 80
+
+        return self.driver.send(body)
 
 
 class SocketNotifier(BaseNotifier):

@@ -25,6 +25,52 @@ class Metric(object):
         pass
 
 
+class DebugMetric(Metric):
+    """Debugging metric.
+
+    Use the "real_metric" configuration option to specify the metric
+    to wrap.
+    """
+
+    def __init__(self, config):
+        """Initialize the metric from the configuration."""
+
+        # First, figure out the real metric
+        self.metric_name = config['real_metric']
+
+        # Get the class and instantiate it
+        cls = utils.import_class_or_module(self.metric_name)
+        self.metric = cls(config)
+        self.vtype = self.metric.vtype
+
+    def start(self):
+        """Start collecting the metric."""
+
+        # Collect the starting statistic from the underlying metric
+        value = self.metric.start()
+
+        # Output debugging information
+        print "*" * 80
+        print "Debug: Starting metric %r: %r" % (self.metric_name, value)
+        print "*" * 80
+
+        return value
+
+    def __call__(self, value):
+        """Finish collecting the metric and return the value."""
+
+        # Collect the ending statistic from the underlying metric
+        end_value = self.metric(value)
+
+        # Output debugging information
+        print "*" * 80
+        print "Debug: Ending metric %r: %r/%r" % (self.metric_name, value,
+                                                  end_value)
+        print "*" * 80
+
+        return end_value
+
+
 class ExecTime(Metric):
     """Collect execution time metrics."""
 
