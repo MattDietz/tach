@@ -88,14 +88,18 @@ class ExecTime(Metric):
 
 
 class Increment(Metric):
-    """Collect increment/decrement metrics."""
+    """Collect increment/decrement metrics.
+
+    Use the "increment" configuration option to specify the increment.
+    If not specified, it defaults to "1".
+    """
 
     vtype = 'increment'
 
     def __init__(self, config):
         """Initialize the metric from the configuration."""
 
-        self.increment = config.get('increment', 1)
+        self.increment = int(config.get('increment', 1))
 
     def __call__(self, value):
         """Finish collecting the metric and return the value."""
