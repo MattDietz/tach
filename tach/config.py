@@ -276,7 +276,8 @@ class Method(object):
             # and notification
             value = self.metric.start()
             result = method(*args, **kwargs)
-            self.notifier(self.metric(value), label or self.label)
+            self.notifier(self.metric(value), self.metric.vtype,
+                          label or self.label)
 
             return result
 

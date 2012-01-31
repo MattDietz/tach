@@ -7,6 +7,9 @@ class Metric(object):
     Subclasses must implement __call__(); it should take as an
     argument the return value of the start() method (by default,
     None); stop the collection; and return the final metric value.
+    Subclasses must also set the `vtype` class attribute, to identify
+    the type of the result; this will be used by notifiers to format
+    the value correctly.
     """
 
     def __init__(self, config):
@@ -25,7 +28,7 @@ class Metric(object):
 class ExecTime(Metric):
     """Collect execution time metrics."""
 
-    type = 'exec_time'
+    vtype = 'exec_time'
 
     def start(self):
         """Start collecting the metric."""
@@ -41,7 +44,7 @@ class ExecTime(Metric):
 class Increment(Metric):
     """Collect increment/decrement metrics."""
 
-    type = 'increment'
+    vtype = 'increment'
 
     def __init__(self, config):
         """Initialize the metric from the configuration."""

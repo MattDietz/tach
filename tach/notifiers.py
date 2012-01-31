@@ -13,7 +13,7 @@ class BaseNotifier(object):
 
         self.config = config
 
-    def __call__(self, value, label):
+    def __call__(self, value, vtype, label):
         """Causes the metric to be formatted and sent.
 
         Subclasses must implement methods for metric types and the
@@ -21,7 +21,7 @@ class BaseNotifier(object):
         """
 
         # Get the value formatter for the value type
-        meth = getattr(self, value.type, None)
+        meth = getattr(self, vtype, None)
         if not meth:
             meth = getattr(self, 'default', None)
             if not meth:
