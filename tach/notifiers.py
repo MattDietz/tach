@@ -1,7 +1,11 @@
+import logging
 import socket
 import time
 
 from tach import utils
+
+
+LOG = logging.getLogger(__name__)
 
 
 class BaseNotifier(object):
@@ -91,11 +95,10 @@ class DebugNotifier(BaseNotifier):
         body = self.driver.format(value, vtype, label)
 
         # Output debugging information
-        print "*" * 80
-        print "Debug: Notifying %r of message %r" % (self.driver_name, body)
-        print "Debug: Raw value of type %r: %r" % (vtype, value)
-        print "Debug: Statistic label: %r" % label
-        print "*" * 80
+        LOG.debug("DebugNotifier: Notifying %r of message %r" %
+                  (self.driver_name, body))
+        LOG.debug("DebugNotifier: Raw value of type %r: %r" % (vtype, value))
+        LOG.debug("DebugNotifier: Statistic label: %r" % label)
 
         return self.driver.send(body)
 

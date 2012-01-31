@@ -1,6 +1,10 @@
+import logging
 import time
 
 from tach import utils
+
+
+LOG = logging.getLogger(__name__)
 
 
 class Metric(object):
@@ -52,9 +56,8 @@ class DebugMetric(Metric):
         value = self.metric.start()
 
         # Output debugging information
-        print "*" * 80
-        print "Debug: Starting metric %r: %r" % (self.metric_name, value)
-        print "*" * 80
+        LOG.debug("DebugMetric: Starting metric %r: %r" %
+                  (self.metric_name, value))
 
         return value
 
@@ -65,10 +68,8 @@ class DebugMetric(Metric):
         end_value = self.metric(value)
 
         # Output debugging information
-        print "*" * 80
-        print "Debug: Ending metric %r: %r/%r" % (self.metric_name, value,
-                                                  end_value)
-        print "*" * 80
+        LOG.debug("DebugMetric: Ending metric %r: %r/%r" %
+                  (self.metric_name, value, end_value))
 
         return end_value
 
