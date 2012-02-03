@@ -22,7 +22,7 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 2.6'
     ],
-    url='https://github.com/Cerberus98/yagi',
+    url='https://github.com/Cerberus98/tach',
     scripts=['bin/tach'],
     long_description=read('README.md'),
     install_requires=[''],
