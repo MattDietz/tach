@@ -100,7 +100,7 @@ class DebugNotifier(BaseNotifier):
         LOG.debug("DebugNotifier: Raw value of type %r: %r" % (vtype, value))
         LOG.debug("DebugNotifier: Statistic label: %r" % label)
 
-        return self.driver.send(body)
+        self.driver.send(body)
 
 
 class SocketNotifier(BaseNotifier):
@@ -139,7 +139,9 @@ class SocketNotifier(BaseNotifier):
                 sock.sendall(body)
             except socket.error as e:
                 if rnd:
-                    print "Error writing to server: %s" % e
+                    LOG.error("%s: Error writing to server (%s, %s): %s" %
+                              (self.__class__.__name__, self.host, self.port,
+                               e))
 
                 # Try reopening the socket next time
                 del self.sock
