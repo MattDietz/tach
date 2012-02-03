@@ -326,19 +326,9 @@ class Method(object):
         """Return an initialized statistic object."""
 
         if not self._metric_cache:
-            if self._metric in ('timer', 'graphite', 'statsd_timer'):
-                # These all handled execution times
-                self._metric_cache = metrics.ExecTime({})
-            elif self._metric == 'statsd_incr':
-                # This was an increment operation
-                self._metric_cache = metrics.Increment(dict(increment=1))
-            elif self._metric == 'statsd_decr':
-                # This was a decrement operation
-                self._metric_cache = metrics.Increment(dict(increment=-1))
-            else:
-                # New-style config; select an appropriate statistic
-                cls = utils.import_class_or_module(self._metric)
-                self._metric_cache = cls(self.additional)
+            # Select an appropriate statistic
+            cls = utils.import_class_or_module(self._metric)
+            self._metric_cache = cls(self.additional)
 
         return self._metric_cache
 
