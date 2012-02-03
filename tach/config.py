@@ -98,7 +98,7 @@ class Notifier(object):
         self.additional = {}
 
         self.label = label.partition(':')[-1]
-        if not label:
+        if not self.label:
             # No label makes this the default
             self.default = True
 
