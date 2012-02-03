@@ -106,18 +106,12 @@ class DebugNotifier(BaseNotifier):
 class SocketNotifier(BaseNotifier):
     """Base class for notifiers using sockets."""
 
-    def __init__(self, config, hostattr='host', portattr='port'):
-        """Initialize a SocketNotifier.
-
-        The legacy configuration for the Graphite and StatsD notifiers
-        requires alternate configuration keys than the defaults.  The
-        defaults can be overridden by specifying hostattr and
-        portattr.
-        """
+    def __init__(self, config):
+        """Initialize a SocketNotifier."""
 
         super(SocketNotifier, self).__init__(config)
-        self.host = config[hostattr]
-        self.port = int(config[portattr])
+        self.host = config['host']
+        self.port = int(config['port'])
 
         # Save the socket
         self._sock = None

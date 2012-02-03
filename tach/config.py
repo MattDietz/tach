@@ -105,9 +105,7 @@ class Notifier(object):
         # Process configuration
         for option, value in items:
             if option == 'driver':
-                # Get the driver, but only if we don't have one
-                if not self._driver:
-                    self._driver = utils.import_class_or_module(value)
+                self._driver = utils.import_class_or_module(value)
 
             # Other options go into additional
             else:

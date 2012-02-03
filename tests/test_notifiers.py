@@ -114,15 +114,6 @@ class TestSocketNotifier(TestSocketNotifierBase):
         self.assertEqual(notifier.port, 12345)
         self.assertEqual(notifier._sock, None)
 
-    def test_init_alternate(self):
-        self.config.update(alt_host='alt.example.com', alt_port='54321')
-        notifier = notifiers.SocketNotifier(self.config,
-                                            'alt_host', 'alt_port')
-
-        self.assertEqual(notifier.host, 'alt.example.com')
-        self.assertEqual(notifier.port, 54321)
-        self.assertEqual(notifier._sock, None)
-
     def test_tcp_sock(self):
         notifier = notifiers.SocketNotifier(self.config)
         sock = notifier.sock
