@@ -195,14 +195,12 @@ class Method(object):
 
         self.config = config
         self.label = label
-        self._method_cache = None
         self._app_cache = None
         self._metric_cache = None
 
         # Other important configuration values
-        attrs = set(['module', 'method', 'metric', 'notifier',
-                     'app', 'app_path'])
         required = set(['module', 'method', 'metric'])
+        attrs = set(['notifier', 'app', 'app_path']) | required
         for attr in attrs:
             setattr(self, '_' + attr, None)
         self.additional = {}
@@ -224,7 +222,7 @@ class Method(object):
         # Make sure we got the essential configuration
         if required:
             raise Exception("Missing configuration options for %s: %s" %
-                            (sec, ', '.join(required)))
+                            (label, ', '.join(required)))
 
         # Grab the method we're operating on
         method_cls = utils.import_class_or_module(self._module)
