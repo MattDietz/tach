@@ -1,8 +1,13 @@
+[notifier:graphite]
+host = 127.0.0.1
+port = 2003
+
 # measured.somemetric
 [measured.whatever]
 module = test.Derp
 method = foo
-metric = datetime
+metric = tach.metrics.ExecTime
+notifier = graphite
 # This method has to mimick the method signature of the one we're patching
 app_path = path.to.some.module
 app = method_to_call
@@ -10,11 +15,8 @@ app = method_to_call
 [measured.runsomecrap]
 module = bar.Baz
 method = run_script
-metric = graphite
+metric = tach.metrics.ExecTime
+notifier = graphite
 app_path = path.to.some.module
 app = method_to_call
-
-[graphite.config]
-carbon_host = 127.0.0.1
-carbon_port = 2003
 

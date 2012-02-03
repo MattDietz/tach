@@ -1,7 +1,10 @@
 import sys
 import traceback
 
+
 def import_class_or_module(klass_str):
+    """Import a named class or module."""
+
     module, sep, klass = klass_str.rpartition('.')
     if module:
         try:
