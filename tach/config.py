@@ -26,8 +26,7 @@ class Config(object):
 
         # Process configuration
         for sec in config.sections():
-            if (sec in ('graphite.config', 'statsd.config') or
-                sec == 'notifier' or sec.startswith('notifier:')):
+            if sec == 'notifier' or sec.startswith('notifier:'):
                 # Make a notifier
                 notifier = Notifier(self, sec, config.items(sec))
 
@@ -98,27 +97,10 @@ class Notifier(object):
         self._driver_cache = None
         self.additional = {}
 
-        # Parse the label for backwards compatibility
-        if label == 'graphite.config':
-            # Graphite driver
+        self.label = label.partition(':')[-1]
+        if not label:
+            # No label makes this the default
             self.default = True
-            self.label = 'graphite'
-            self._driver = notifiers.GraphiteNotifier
-            self._driver_cache = self._driver(self,
-                                              'carbon_host', 'carbon_port')
-        elif label == 'statsd.config':
-            # StatsD driver
-            self.default = True
-            self.label = 'statsd'
-            self._driver = notifiers.StatsDNotifier
-            self._driver_cache = self._driver(self,
-                                              'statsd_host', 'statsd_port')
-        else:
-            # New-style configuration
-            self.label = label.partition(':')[-1]
-            if not label:
-                # No label makes this the default
-                self.default = True
 
         # Process configuration
         for option, value in items:
