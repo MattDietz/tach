@@ -297,6 +297,10 @@ class Method(object):
     def app(self):
         """Return the application transformer."""
 
+        # Don't crash if we don't have an app set
+        if not self._app or not self._app_path:
+            return None
+
         if not self._app_cache:
             app_cls = utils.import_class_or_module(self._app_path)
             self._app_cache = getattr(app_cls, self._app)
