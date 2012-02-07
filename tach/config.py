@@ -247,7 +247,7 @@ class Method(object):
         def wrapper(*args, **kwargs):
             # Handle app translation
             label = None
-            if self.app:
+            if self._app:
                 args, kwargs, label = self.app(*args, **kwargs)
 
             # Run the method, bracketing with statistics collection
