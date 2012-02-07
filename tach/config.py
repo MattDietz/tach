@@ -245,6 +245,10 @@ class Method(object):
         # Wrap the method to perform statistics collection
         @functools.wraps(method)
         def wrapper(*args, **kwargs):
+            # Deal with class method calling conventions
+            if kind == 'class method':
+                args = args[1:]
+
             # Handle app translation
             label = None
             if self._app:
