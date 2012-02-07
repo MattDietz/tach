@@ -69,13 +69,59 @@ class FakeHelper(object):
         return new_args, new_kwargs, 'fake_label'
 
 
-class ConfigTestCase(tests.TestCase):
-    config = {}
-    notifier_class = None
-    method_class = None
+class FakeSubConfig(object):
+    def __init__(self, cfg, label, items):
+        self.config = cfg
+        self.items = dict(items)
+
+        if label.startswith('notifier'):
+            self.label = label.partition(':')[-1]
+            self.default = not self.label
+
+            # Set up a driver
+            self.driver = self.items.get('driver', '__default__')
+        else:
+            self.label = label
+            self.installed = False
+
+    def install(self):
+        self.installed = True
+
+    def uninstall(self):
+        self.installed = False
+
+
+class TestConfig(tests.TestCase):
+    config = {
+        'init_config': """
+[notifier]
+param1=this is a test
+param2=this is also a test
+
+[notifier:foobar]
+spam=I am a fubared notifier
+
+[foo.bar]
+desc=a typical method
+
+[bar.foo]
+desc=a not so typical method
+
+[third]
+desc=a third method, just to make things interesting.
+""",
+        'notifier_config': """
+[notifier]
+driver=default_driver
+
+[notifier:foo]
+driver=foo_driver
+""",
+        'blank_config': "",
+        }
 
     def setUp(self):
-        super(ConfigTestCase, self).setUp()
+        super(TestConfig, self).setUp()
 
         def fake_read(cp, filenames):
             if isinstance(filenames, basestring):
@@ -92,10 +138,124 @@ class ConfigTestCase(tests.TestCase):
 
         self.stubs.Set(ConfigParser.SafeConfigParser, 'read', fake_read)
 
-        if self.notifier_class:
-            self.stubs.Set(config, 'Notifier', self.notifier_class)
-        if self.method_class:
-            self.stubs.Set(config, 'Method', self.method_class)
+        self.stubs.Set(config, 'Notifier', FakeSubConfig)
+        self.stubs.Set(config, 'Method', FakeSubConfig)
+
+    def test_init(self):
+        cfg = config.Config('init_config')
+
+        # Check that we set up the correct notifiers dict entries
+        self.assertEqual(len(cfg.notifiers), 3)
+        self.assertIn(None, cfg.notifiers)
+        self.assertIn('', cfg.notifiers)
+        self.assertEqual(cfg.notifiers[None], cfg.notifiers[''])
+        self.assertIn('foobar', cfg.notifiers)
+
+        # Check that we fed the notifiers the right arguments
+        self.assertEqual(cfg.notifiers[None].config, cfg)
+        self.assertEqual(cfg.notifiers[None].label, '')
+        self.assertEqual(cfg.notifiers[None].items, dict(
+                param1='this is a test',
+                param2='this is also a test'))
+        self.assertEqual(cfg.notifiers['foobar'].config, cfg)
+        self.assertEqual(cfg.notifiers['foobar'].label, 'foobar')
+        self.assertEqual(cfg.notifiers['foobar'].items, dict(
+                spam='I am a fubared notifier'))
+
+        # Check that we set up the correct method dict entries
+        self.assertEqual(len(cfg.methods), 3)
+        self.assertIn('foo.bar', cfg.methods)
+        self.assertIn('bar.foo', cfg.methods)
+        self.assertIn('third', cfg.methods)
+
+        # Check that we fed the methods the right arguments
+        self.assertEqual(cfg.methods['foo.bar'].config, cfg)
+        self.assertEqual(cfg.methods['foo.bar'].label, 'foo.bar')
+        self.assertEqual(cfg.methods['foo.bar'].items, dict(
+                desc='a typical method'))
+        self.assertEqual(cfg.methods['bar.foo'].config, cfg)
+        self.assertEqual(cfg.methods['bar.foo'].label, 'bar.foo')
+        self.assertEqual(cfg.methods['bar.foo'].items, dict(
+                desc='a not so typical method'))
+        self.assertEqual(cfg.methods['third'].config, cfg)
+        self.assertEqual(cfg.methods['third'].label, 'third')
+        self.assertEqual(cfg.methods['third'].items, dict(
+                desc='a third method, just to make things interesting.'))
+
+    def test_init_nodefault_notifier(self):
+        cfg = config.Config('blank_config')
+
+        self.assertEqual(len(cfg.notifiers), 1)
+        self.assertIn(None, cfg.notifiers)
+
+        self.assertEqual(cfg.notifiers[None].config, cfg)
+        self.assertEqual(cfg.notifiers[None].label, '')
+        self.assertEqual(cfg.notifiers[None].items, {})
+
+    def test_notifier(self):
+        cfg = config.Config('notifier_config')
+        result = cfg.notifier('foo')
+
+        self.assertEqual(result, 'foo_driver')
+
+    def test_notifier_default(self):
+        cfg = config.Config('notifier_config')
+        result = cfg.notifier('bar')
+
+        self.assertEqual(result, 'default_driver')
+
+    def test_notifier_nodefault(self):
+        cfg = config.Config('blank_config')
+        result = cfg.notifier('bar')
+
+        self.assertEqual(result, '__default__')
+
+    def test_all_methods(self):
+        cfg = config.Config('init_config')
+        result = sorted([meth.label for meth in cfg._methods(())])
+
+        self.assertEqual(result, ['bar.foo', 'foo.bar', 'third'])
+
+    def test_methods_slice(self):
+        cfg = config.Config('init_config')
+        result = sorted([meth.label for meth in
+                         cfg._methods(('foo.bar', 'bar.foo'))])
+
+        self.assertEqual(result, ['bar.foo', 'foo.bar'])
+
+    def _check_installed(self, cfg, *results):
+        for key, value in results:
+            self.assertEqual(cfg.methods[key].installed, value)
+
+    def test_install_all(self):
+        cfg = config.Config('init_config')
+        cfg.install()
+
+        self._check_installed(cfg, ('foo.bar', True), ('bar.foo', True),
+                              ('third', True))
+
+    def test_install_slice(self):
+        cfg = config.Config('init_config')
+        cfg.install('foo.bar', 'bar.foo')
+
+        self._check_installed(cfg, ('foo.bar', True), ('bar.foo', True),
+                              ('third', False))
+
+    def test_uninstall_all(self):
+        cfg = config.Config('init_config')
+        cfg.install()
+        cfg.uninstall()
+
+        self._check_installed(cfg, ('foo.bar', False), ('bar.foo', False),
+                              ('third', False))
+
+    def test_uninstall_slice(self):
+        cfg = config.Config('init_config')
+        cfg.install()
+        cfg.uninstall('foo.bar', 'bar.foo')
+
+        self._check_installed(cfg, ('foo.bar', False), ('bar.foo', False),
+                              ('third', True))
 
 
 class TestNotifier(tests.TestCase):
