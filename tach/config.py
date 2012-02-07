@@ -34,7 +34,8 @@ class Config(object):
                 self.notifiers.setdefault(notifier.label, notifier)
 
                 # If it's a default notifier, add it as such
-                self.notifiers.setdefault(None, notifier)
+                if notifier.default:
+                    self.notifiers.setdefault(None, notifier)
             else:
                 # Make a method
                 method = Method(self, sec, config.items(sec))
@@ -43,7 +44,7 @@ class Config(object):
                 self.methods.setdefault(method.label, method)
 
         # Do we have a default notifier?
-        self.notifiers.setdefault(None, Notifier(self, '', []))
+        self.notifiers.setdefault(None, Notifier(self, 'notifier', []))
 
     def notifier(self, name):
         """Retrieve a notifier driver given its name."""
