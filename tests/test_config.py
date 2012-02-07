@@ -474,3 +474,37 @@ class TestMethod(tests.TestCase):
                     args=(1, 2, 3),
                     kwargs=dict(a=4, b=5, c=6))))
         self.assertEqual(method.notifier.sent_msgs, [])
+
+    def test_get_app(self):
+        method = config.Method(None, 'label', [
+                ('module', 'FakeClass'),
+                ('method', 'instance_method'),
+                ('metric', 'FakeMetric'),
+                ('app_path', 'FakeHelper'),
+                ('app', 'fake_helper')])
+
+        self.assertEqual(method.app, FakeHelper.fake_helper)
+
+    def test_get_no_app(self):
+        method = config.Method(None, 'label', [
+                ('module', 'FakeClass'),
+                ('method', 'instance_method'),
+                ('metric', 'FakeMetric')])
+
+        self.assertEqual(method.app, None)
+
+    def test_get_metric(self):
+        method = config.Method(None, 'label', [
+                ('module', 'FakeClass'),
+                ('method', 'instance_method'),
+                ('metric', 'FakeMetric')])
+
+        self.assertIsInstance(method.metric, FakeMetric)
+
+    def test_get_notifier(self):
+        method = config.Method(FakeConfig(), 'label', [
+                ('module', 'FakeClass'),
+                ('method', 'instance_method'),
+                ('metric', 'FakeMetric')])
+
+        self.assertIsInstance(method.notifier, FakeNotifier)
