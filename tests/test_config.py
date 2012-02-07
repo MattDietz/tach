@@ -267,17 +267,6 @@ class TestMethod(tests.TestCase):
         self.assertEqual(method._method_orig,
                          FakeClass.__dict__['static_method'])
 
-    def test_init_static(self):
-        method = config.Method(None, 'label', [
-                ('module', 'FakeClass'),
-                ('method', 'static_method'),
-                ('metric', 'FakeMetric')])
-
-        self.assertEqual(method._method_cls, FakeClass)
-        self.assertIsInstance(method._method_wrapper, staticmethod)
-        self.assertEqual(method._method_orig,
-                         FakeClass.__dict__['static_method'])
-
     def test_init_function(self):
         method = config.Method(None, 'label', [
                 ('module', 'fake_module'),
@@ -332,3 +321,5 @@ class TestMethod(tests.TestCase):
                 kwargs=dict(a=1, b=2, c=3)))
         self.assertEqual(method.notifier.sent_msgs,
                          ["default/'started/ended'/'fake_label'"])
+
+    def test_
