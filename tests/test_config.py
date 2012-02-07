@@ -11,8 +11,12 @@ from tests import fake_module
 
 
 class FakeConfig(object):
+    _notifier = None
+
     def notifier(self, name):
-        return FakeNotifier(None)
+        if not self._notifier:
+            self._notifier = FakeNotifier(None)
+        return self._notifier
 
 
 class FakeNotifier(notifiers.BaseNotifier):
@@ -59,7 +63,10 @@ class FakeClass(object):
 class FakeHelper(object):
     @staticmethod
     def fake_helper(*args, **kwargs):
-        return args, kwargs, 'fake_label'
+        # Swap args and kwargs
+        new_kwargs = dict(zip('abcdefghijklmnopqrstuvwxyz', args))
+        new_args = [kwargs[k] for k in sorted(kwargs)]
+        return new_args, new_kwargs, 'fake_label'
 
 
 class ConfigTestCase(tests.TestCase):
@@ -280,3 +287,48 @@ class TestMethod(tests.TestCase):
         self.assertEqual(method._method_cls, fake_module)
         self.assertTrue(inspect.isfunction(method._method_wrapper))
         self.assertEqual(method._method_orig, fake_module.function)
+
+    def test_additional_config(self):
+        method = config.Method(None, 'label', [
+                ('module', 'FakeClass'),
+                ('method', 'instance_method'),
+                ('metric', 'FakeMetric'),
+                ('foo', 'bar')])
+
+        self.assertEqual(method['foo'], 'bar')
+        with self.assertRaises(KeyError):
+            _foo = method['bar']
+
+    def test_wrapper_basic(self):
+        method = config.Method(FakeConfig(), 'label', [
+                ('module', 'fake_module'),
+                ('method', 'function'),
+                ('metric', 'FakeMetric')])
+
+        # We know that method._method_wrapper is the wrapper function,
+        # so we can call it with impunity
+        result = method._method_wrapper(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, dict(
+                args=(1, 2, 3),
+                kwargs=dict(a=4, b=5, c=6)))
+        self.assertEqual(method.notifier.sent_msgs,
+                         ["default/'started/ended'/'label'"])
+
+    def test_wrapper_helper(self):
+        method = config.Method(FakeConfig(), 'label', [
+                ('module', 'fake_module'),
+                ('method', 'function'),
+                ('metric', 'FakeMetric'),
+                ('app_path', 'FakeHelper'),
+                ('app', 'fake_helper')])
+
+        # We know that method._method_wrapper is the wrapper function,
+        # so we can call it with impunity
+        result = method._method_wrapper(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, dict(
+                args=(4, 5, 6),
+                kwargs=dict(a=1, b=2, c=3)))
+        self.assertEqual(method.notifier.sent_msgs,
+                         ["default/'started/ended'/'fake_label'"])
