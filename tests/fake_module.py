@@ -1,2 +1,2 @@
 def function(*args, **kwargs):
-    return dict(args=args, kwargs=kwargs)
+    return 'function', dict(args=args, kwargs=kwargs)

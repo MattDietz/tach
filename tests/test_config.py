@@ -48,16 +48,16 @@ class FakeMetric(metrics.Metric):
 
 
 class FakeClass(object):
-    def instance_method(self):
-        pass
+    def instance_method(self, *args, **kwargs):
+        return 'method', dict(args=args, kwargs=kwargs)
 
     @classmethod
-    def class_method(cls):
-        pass
+    def class_method(cls, *args, **kwargs):
+        return 'class', dict(args=args, kwargs=kwargs)
 
     @staticmethod
-    def static_method():
-        pass
+    def static_method(*args, **kwargs):
+        return 'static', dict(args=args, kwargs=kwargs)
 
 
 class FakeHelper(object):
@@ -298,9 +298,9 @@ class TestMethod(tests.TestCase):
         # so we can call it with impunity
         result = method._method_wrapper(1, 2, 3, a=4, b=5, c=6)
 
-        self.assertEqual(result, dict(
-                args=(1, 2, 3),
-                kwargs=dict(a=4, b=5, c=6)))
+        self.assertEqual(result, ('function', dict(
+                    args=(1, 2, 3),
+                    kwargs=dict(a=4, b=5, c=6))))
         self.assertEqual(method.notifier.sent_msgs,
                          ["default/'started/ended'/'label'"])
 
@@ -316,10 +316,161 @@ class TestMethod(tests.TestCase):
         # so we can call it with impunity
         result = method._method_wrapper(1, 2, 3, a=4, b=5, c=6)
 
-        self.assertEqual(result, dict(
-                args=(4, 5, 6),
-                kwargs=dict(a=1, b=2, c=3)))
+        self.assertEqual(result, ('function', dict(
+                    args=(4, 5, 6),
+                    kwargs=dict(a=1, b=2, c=3))))
         self.assertEqual(method.notifier.sent_msgs,
                          ["default/'started/ended'/'fake_label'"])
 
-    def test_
+    def test_install_instance(self):
+        method = config.Method(FakeConfig(), 'label', [
+                ('module', 'FakeClass'),
+                ('method', 'instance_method'),
+                ('metric', 'FakeMetric')])
+
+        # Call the method and confirm no notifications are issued
+        inst = FakeClass()
+        result = inst.instance_method(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, ('method', dict(
+                    args=(1, 2, 3),
+                    kwargs=dict(a=4, b=5, c=6))))
+        self.assertEqual(method.notifier.sent_msgs, [])
+
+        # Install the metric collector
+        method.install()
+
+        # Call the method and confirm the notification is issued
+        result = inst.instance_method(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, ('method', dict(
+                    args=(1, 2, 3),
+                    kwargs=dict(a=4, b=5, c=6))))
+        self.assertEqual(method.notifier.sent_msgs,
+                         ["default/'started/ended'/'label'"])
+
+        # Uninstall the metric collector and reset the messages issued
+        method.uninstall()
+        method.notifier.sent_msgs = []
+
+        # Call the method and confirm the notification is not issued
+        result = inst.instance_method(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, ('method', dict(
+                    args=(1, 2, 3),
+                    kwargs=dict(a=4, b=5, c=6))))
+        self.assertEqual(method.notifier.sent_msgs, [])
+
+    def test_install_class(self):
+        method = config.Method(FakeConfig(), 'label', [
+                ('module', 'FakeClass'),
+                ('method', 'class_method'),
+                ('metric', 'FakeMetric')])
+
+        # Call the method and confirm no notifications are issued
+        result = FakeClass.class_method(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, ('class', dict(
+                    args=(1, 2, 3),
+                    kwargs=dict(a=4, b=5, c=6))))
+        self.assertEqual(method.notifier.sent_msgs, [])
+
+        # Install the metric collector
+        method.install()
+
+        # Call the method and confirm the notification is issued
+        result = FakeClass.class_method(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, ('class', dict(
+                    args=(1, 2, 3),
+                    kwargs=dict(a=4, b=5, c=6))))
+        self.assertEqual(method.notifier.sent_msgs,
+                         ["default/'started/ended'/'label'"])
+
+        # Uninstall the metric collector and reset the messages issued
+        method.uninstall()
+        method.notifier.sent_msgs = []
+
+        # Call the method and confirm the notification is not issued
+        result = FakeClass.class_method(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, ('class', dict(
+                    args=(1, 2, 3),
+                    kwargs=dict(a=4, b=5, c=6))))
+        self.assertEqual(method.notifier.sent_msgs, [])
+
+    def test_install_static(self):
+        method = config.Method(FakeConfig(), 'label', [
+                ('module', 'FakeClass'),
+                ('method', 'static_method'),
+                ('metric', 'FakeMetric')])
+
+        # Call the method and confirm no notifications are issued
+        result = FakeClass.static_method(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, ('static', dict(
+                    args=(1, 2, 3),
+                    kwargs=dict(a=4, b=5, c=6))))
+        self.assertEqual(method.notifier.sent_msgs, [])
+
+        # Install the metric collector
+        method.install()
+
+        # Call the method and confirm the notification is issued
+        result = FakeClass.static_method(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, ('static', dict(
+                    args=(1, 2, 3),
+                    kwargs=dict(a=4, b=5, c=6))))
+        self.assertEqual(method.notifier.sent_msgs,
+                         ["default/'started/ended'/'label'"])
+
+        # Uninstall the metric collector and reset the messages issued
+        method.uninstall()
+        method.notifier.sent_msgs = []
+
+        # Call the method and confirm the notification is not issued
+        result = FakeClass.static_method(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, ('static', dict(
+                    args=(1, 2, 3),
+                    kwargs=dict(a=4, b=5, c=6))))
+        self.assertEqual(method.notifier.sent_msgs, [])
+
+    def test_install_function(self):
+        method = config.Method(FakeConfig(), 'label', [
+                ('module', 'fake_module'),
+                ('method', 'function'),
+                ('metric', 'FakeMetric')])
+
+        # Call the method and confirm no notifications are issued
+        result = fake_module.function(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, ('function', dict(
+                    args=(1, 2, 3),
+                    kwargs=dict(a=4, b=5, c=6))))
+        self.assertEqual(method.notifier.sent_msgs, [])
+
+        # Install the metric collector
+        method.install()
+
+        # Call the method and confirm the notification is issued
+        result = fake_module.function(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, ('function', dict(
+                    args=(1, 2, 3),
+                    kwargs=dict(a=4, b=5, c=6))))
+        self.assertEqual(method.notifier.sent_msgs,
+                         ["default/'started/ended'/'label'"])
+
+        # Uninstall the metric collector and reset the messages issued
+        method.uninstall()
+        method.notifier.sent_msgs = []
+
+        # Call the method and confirm the notification is not issued
+        result = fake_module.function(1, 2, 3, a=4, b=5, c=6)
+
+        self.assertEqual(result, ('function', dict(
+                    args=(1, 2, 3),
+                    kwargs=dict(a=4, b=5, c=6))))
+        self.assertEqual(method.notifier.sent_msgs, [])
