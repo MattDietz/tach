@@ -26,8 +26,7 @@ class Config(object):
 
         # Process configuration
         for sec in config.sections():
-            if (sec in ('graphite.config', 'statsd.config') or
-                sec == 'notifier' or sec.startswith('notifier:')):
+            if sec == 'notifier' or sec.startswith('notifier:'):
                 # Make a notifier
                 notifier = Notifier(self, sec, config.items(sec))
 
@@ -35,7 +34,8 @@ class Config(object):
                 self.notifiers.setdefault(notifier.label, notifier)
 
                 # If it's a default notifier, add it as such
-                self.notifiers.setdefault(None, notifier)
+                if notifier.default:
+                    self.notifiers.setdefault(None, notifier)
             else:
                 # Make a method
                 method = Method(self, sec, config.items(sec))
@@ -44,7 +44,7 @@ class Config(object):
                 self.methods.setdefault(method.label, method)
 
         # Do we have a default notifier?
-        self.notifiers.setdefault(None, Notifier(self, '', []))
+        self.notifiers.setdefault(None, Notifier(self, 'notifier', []))
 
     def notifier(self, name):
         """Retrieve a notifier driver given its name."""
@@ -98,34 +98,15 @@ class Notifier(object):
         self._driver_cache = None
         self.additional = {}
 
-        # Parse the label for backwards compatibility
-        if label == 'graphite.config':
-            # Graphite driver
+        self.label = label.partition(':')[-1]
+        if not self.label:
+            # No label makes this the default
             self.default = True
-            self.label = 'graphite'
-            self._driver = notifiers.GraphiteNotifier
-            self._driver_cache = self._driver(self,
-                                              'carbon_host', 'carbon_port')
-        elif label == 'statsd.config':
-            # StatsD driver
-            self.default = True
-            self.label = 'statsd'
-            self._driver = notifiers.StatsDNotifier
-            self._driver_cache = self._driver(self,
-                                              'statsd_host', 'statsd_port')
-        else:
-            # New-style configuration
-            self.label = label.partition(':')[-1]
-            if not label:
-                # No label makes this the default
-                self.default = True
 
         # Process configuration
         for option, value in items:
             if option == 'driver':
-                # Get the driver, but only if we don't have one
-                if not self._driver:
-                    self._driver = utils.import_class_or_module(value)
+                self._driver = utils.import_class_or_module(value)
 
             # Other options go into additional
             else:
@@ -215,14 +196,12 @@ class Method(object):
 
         self.config = config
         self.label = label
-        self._method_cache = None
         self._app_cache = None
         self._metric_cache = None
 
         # Other important configuration values
-        attrs = set(['module', 'method', 'metric', 'notifier',
-                     'app', 'app_path'])
         required = set(['module', 'method', 'metric'])
+        attrs = set(['notifier', 'app', 'app_path']) | required
         for attr in attrs:
             setattr(self, '_' + attr, None)
         self.additional = {}
@@ -244,7 +223,7 @@ class Method(object):
         # Make sure we got the essential configuration
         if required:
             raise Exception("Missing configuration options for %s: %s" %
-                            (sec, ', '.join(required)))
+                            (label, ', '.join(required)))
 
         # Grab the method we're operating on
         method_cls = utils.import_class_or_module(self._module)
@@ -267,9 +246,13 @@ class Method(object):
         # Wrap the method to perform statistics collection
         @functools.wraps(method)
         def wrapper(*args, **kwargs):
+            # Deal with class method calling conventions
+            if kind == 'class method':
+                args = args[1:]
+
             # Handle app translation
             label = None
-            if self.app:
+            if self._app:
                 args, kwargs, label = self.app(*args, **kwargs)
 
             # Run the method, bracketing with statistics collection
@@ -314,6 +297,10 @@ class Method(object):
     @property
     def app(self):
         """Return the application transformer."""
+
+        # Don't crash if we don't have an app set
+        if not self._app or not self._app_path:
+            return None
 
         if not self._app_cache:
             app_cls = utils.import_class_or_module(self._app_path)
