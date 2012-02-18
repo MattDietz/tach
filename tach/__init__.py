@@ -7,8 +7,5 @@ def patch(config_path):
     # Load the configuration
     cfg = config.Config(config_path)
 
-    # Install all the metric gatherers
-    cfg.install()
-
     # Return the configuration
     return cfg

@@ -41,7 +41,7 @@ This is where things get a little messy, but that's the catch with trying to ins
         resource = args[0]
         req = args[1].__dict__
         method = ".%s" % req['environ']['REQUEST_METHOD']
-        path = '.'.join(req['environ']['PATH_INFO'].split('/')[:3])
+        path = '.%s' % req['environ']['PATH_INFO'].split('/')[2]
         action = ".%s" % req['environ']['wsgiorg.routing_args'][1]['action']
         if action:
             key = 'nova.api%s%s%s' % (path, action, method)

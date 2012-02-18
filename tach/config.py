@@ -69,20 +69,6 @@ class Config(object):
             return [self.methods[meth] for meth in methods
                     if meth in self.methods]
 
-    def install(self, *methods):
-        """Install the given metric gatherers."""
-
-        # Call their install methods
-        for meth in self._methods(methods):
-            meth.install()
-
-    def uninstall(self, *methods):
-        """Uninstall the given metric gatherers."""
-
-        # Call their uninstall methods
-        for meth in self._methods(methods):
-            meth.uninstall()
-
 
 class Notifier(object):
     """Represent a notifier."""
@@ -275,20 +261,12 @@ class Method(object):
         self._method_wrapper = meth_wrap(wrapper)
         self._method_orig = raw_method
 
+        setattr(self._method_cls, self._method, self._method_wrapper)
+
     def __getitem__(self, key):
         """Allow access to additional configuration."""
 
         return self.additional[key]
-
-    def install(self):
-        """Install the metric collector."""
-
-        setattr(self._method_cls, self._method, self._method_wrapper)
-
-    def uninstall(self):
-        """Uninstall the metric collector."""
-
-        setattr(self._method_cls, self._method, self._method_orig)
 
     @property
     def method(self):
