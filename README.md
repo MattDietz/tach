@@ -2,7 +2,10 @@
 
 ## Example instrumentation:
 
-### For the API, created in tach-api.conf
+### For the NovaAPI, using the OpenstackAPI, created in tach-api.conf
+    [global]
+    # also accepts a full path to the file, instead of a python module path
+    app_helper = tach_helper
 
     [notifier:statsd]
     driver = tach.notifiers.StatsDNotifier
@@ -16,51 +19,6 @@
     notifier = statsd
     app_path = tach_helper
     app = process_stack
-
-### For compute, created in tach-compute.conf
-
-    [notifier:statsd]
-    driver = tach.notifiers.StatsDNotifier
-    host = <your statsd host>
-    port = <your statsd port, probably 8125>
-
-    [nova.compute.queue_receive]
-    module = nova.rpc.amqp.ProxyCallback
-    method = _process_data
-    metric = tach.metrics.ExecTime
-    notifier = statsd
-    app_path = tach_helper
-    app = queue_receive
-
-### For network, created in tach-network.conf
-
-    [notifier:statsd]
-    driver = tach.notifiers.StatsDNotifier
-    host = <your statsd host>
-    port = <your statsd port, probably 8125>
-
-    [nova.compute.queue_receive]
-    module = nova.rpc.amqp.ProxyCallback
-    method = _process_data
-    metric = tach.metrics.ExecTime
-    notifier = statsd
-    app_path = tach_helper
-    app = network_queue_receive
-
-### For sheduler, created in tach-scheduler.conf
-
-    [notifier:statsd]
-    driver = tach.notifiers.StatsDNotifier
-    host = <your statsd host>
-    port = <your statsd port, probably 8125>
-
-    [nova.scheduler.queue_receive]
-    module = nova.rpc.amqp.ProxyCallback
-    method = _process_data
-    metric = tach.metrics.ExecTime
-    notifier = statsd
-    app_path = tach_helper
-    app = scheduler_queue_receive
 
 ### Set up the helper script, created in tach_helper.py
 
