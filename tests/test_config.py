@@ -14,21 +14,28 @@ class FakeConfig(object):
     _notifier = None
 
     def notifier(self, name):
+        print "FAKE CONFIG NOTIFIER IN"
         if not self._notifier:
-            self._notifier = FakeNotifier(None)
-        return self._notifier
+            self._notifier = FakeNotifier(self)
+        x = self._notifier
+        print "FAKE CONFIG NOTIFIER OUT"
+        return x
 
 
 class FakeNotifier(notifiers.BaseNotifier):
     def __init__(self, config):
+        print "FAKE NOTIFIER IN"
         super(FakeNotifier, self).__init__(config)
 
         self.sent_msgs = []
+        print "FAKE NOTIFIER OUT"
 
     def default(self, value, label):
+        print "DEFAULT"
         return 'default/%r/%r' % (value, label)
 
     def send(self, body):
+        print "SEND"
         self.sent_msgs.append(body)
 
 
@@ -36,28 +43,43 @@ class FakeMetric(metrics.Metric):
     vtype = 'fake'
 
     def __init__(self, config):
+        print "FAKE METRIC INIT >"
         super(FakeMetric, self).__init__(config)
 
         self.config = config
+        print "FAKE METRIC INIT <"
 
     def start(self):
+        print "START"
         return "started"
 
     def __call__(self, value):
-        return "%s/ended" % value
+        print "METRIC CALL IN"
+        x = "%s/ended" % value
+        print "METRIC CALL OUT"
+        return x
 
 
 class FakeClass(object):
     def instance_method(self, *args, **kwargs):
-        return 'method', dict(args=args, kwargs=kwargs)
+        print "METHOD IN"
+        x = 'method', dict(args=args, kwargs=kwargs)
+        print "METHOD OUT"
+        return x
 
     @classmethod
     def class_method(cls, *args, **kwargs):
-        return 'class', dict(args=args, kwargs=kwargs)
+        print "CLASS IN"
+        x = 'class', dict(args=args, kwargs=kwargs)
+        print "CLASS OUT"
+        return x
 
     @staticmethod
     def static_method(*args, **kwargs):
-        return 'static', dict(args=args, kwargs=kwargs)
+        print "STATIC IN"
+        x = 'static', dict(args=args, kwargs=kwargs)
+        print "STATIC OUT"
+        return x
 
 
 class FakeHelper(object):
@@ -70,7 +92,7 @@ class FakeHelper(object):
 
 
 class FakeSubConfig(object):
-    def __init__(self, cfg, label, items):
+    def __init__(self, cfg, label, items, **kwargs):
         self.config = cfg
         self.items = dict(items)
 
@@ -223,40 +245,6 @@ driver=foo_driver
 
         self.assertEqual(result, ['bar.foo', 'foo.bar'])
 
-    def _check_installed(self, cfg, *results):
-        for key, value in results:
-            self.assertEqual(cfg.methods[key].installed, value)
-
-    def test_install_all(self):
-        cfg = config.Config('init_config')
-        cfg.install()
-
-        self._check_installed(cfg, ('foo.bar', True), ('bar.foo', True),
-                              ('third', True))
-
-    def test_install_slice(self):
-        cfg = config.Config('init_config')
-        cfg.install('foo.bar', 'bar.foo')
-
-        self._check_installed(cfg, ('foo.bar', True), ('bar.foo', True),
-                              ('third', False))
-
-    def test_uninstall_all(self):
-        cfg = config.Config('init_config')
-        cfg.install()
-        cfg.uninstall()
-
-        self._check_installed(cfg, ('foo.bar', False), ('bar.foo', False),
-                              ('third', False))
-
-    def test_uninstall_slice(self):
-        cfg = config.Config('init_config')
-        cfg.install()
-        cfg.uninstall('foo.bar', 'bar.foo')
-
-        self._check_installed(cfg, ('foo.bar', False), ('bar.foo', False),
-                              ('third', True))
-
 
 class TestNotifier(tests.TestCase):
     imports = {'FakeNotifier': FakeNotifier}
@@ -382,7 +370,7 @@ class TestMethod(tests.TestCase):
                 ('method', 'instance_method'),
                 ('metric', 'FakeMetric'),
                 ('notifier', 'notifier'),
-                ('app_path', 'FakeHelper'),
+                ('app_helper', 'FakeHelper'),
                 ('app', 'fake_helper'),
                 ('foo', 'bar')])
 
@@ -395,7 +383,7 @@ class TestMethod(tests.TestCase):
         self.assertEqual(method._method, 'instance_method')
         self.assertEqual(method._metric, 'FakeMetric')
         self.assertEqual(method._notifier, 'notifier')
-        self.assertEqual(method._app_path, 'FakeHelper')
+        self.assertEqual(method._app_helper, 'FakeHelper')
         self.assertEqual(method._app, 'fake_helper')
         self.assertEqual(method._method_cls, FakeClass)
         self.assertTrue(inspect.isfunction(method._method_wrapper))
@@ -469,7 +457,7 @@ class TestMethod(tests.TestCase):
                 ('module', 'fake_module'),
                 ('method', 'function'),
                 ('metric', 'FakeMetric'),
-                ('app_path', 'FakeHelper'),
+                ('app_helper', 'FakeHelper'),
                 ('app', 'fake_helper')])
 
         # We know that method._method_wrapper is the wrapper function,
@@ -528,7 +516,9 @@ class TestMethod(tests.TestCase):
                 ('metric', 'FakeMetric')])
 
         # Call the method and confirm no notifications are issued
+        print "CALLING"
         result = FakeClass.class_method(1, 2, 3, a=4, b=5, c=6)
+        print "CALLED"
 
         self.assertEqual(result, ('class', dict(
                     args=(1, 2, 3),
@@ -640,7 +630,7 @@ class TestMethod(tests.TestCase):
                 ('module', 'FakeClass'),
                 ('method', 'instance_method'),
                 ('metric', 'FakeMetric'),
-                ('app_path', 'FakeHelper'),
+                ('app_helper', 'FakeHelper'),
                 ('app', 'fake_helper')])
 
         self.assertEqual(method.app, FakeHelper.fake_helper)
@@ -667,4 +657,4 @@ class TestMethod(tests.TestCase):
                 ('method', 'instance_method'),
                 ('metric', 'FakeMetric')])
 
-        self.assertIsInstance(method.notifier, FakeNotifier)
+        self.assertIsInstance(method._notifier, FakeNotifier)
