@@ -229,7 +229,7 @@ class Method(object):
                                                         self._method)
         self._method_cache = that_method
 
-        print "Method", that_method, self._method, kind
+        print "Method", that_method, "Orig:", raw_method, self._method
         # We need to wrap the replacement if it's a static or class
         # method
         if kind == 'static method':
@@ -240,7 +240,7 @@ class Method(object):
             meth_wrap = lambda f: f
 
         # Wrap the method to perform statistics collection
-        @functools.wraps(that_method)
+        #@functools.wraps(that_method)
         def wrapper(*args, **kwargs):
             print "WRAPPER IN"
             # Deal with class method calling conventions
@@ -275,6 +275,10 @@ class Method(object):
         self._method_orig = raw_method
 
         setattr(self._method_cls, self._method, self._method_wrapper)
+
+    def detach(self):
+        print "DETACH"
+        setattr(self._method_cls, self._method, self._method_orig)
 
     def __getitem__(self, key):
         """Allow access to additional configuration."""
