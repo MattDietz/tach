@@ -2,8 +2,6 @@ import ConfigParser
 import inspect
 import functools
 
-import traceback
-
 from tach import metrics
 from tach import notifiers
 from tach import utils
@@ -278,11 +276,13 @@ class Method(object):
     @property
     def method(self):
         """Return the actual method."""
+
         return self._method_cache
 
     @property
     def app(self):
         """Return the application transformer."""
+
         # Don't crash if we don't have an app set
         if not self._app or not self._app_helper:
             return None
@@ -307,4 +307,5 @@ class Method(object):
     @property
     def notifier(self):
         """Return the notifier driver."""
+        
         return self.config.notifier(self._notifier)

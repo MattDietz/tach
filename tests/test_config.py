@@ -384,8 +384,10 @@ class TestMethod(tests.TestCase):
 
         self.assertEqual(method._method_cls, FakeClass)
         self.assertIsInstance(method._method_wrapper, classmethod)
-        #self.assertEqual(method._method_orig,
-        #                 FakeClass.__dict__['class_method'])
+
+        method.detach()
+        self.assertEqual(method._method_orig,
+                         FakeClass.__dict__['class_method'])
 
     def test_init_static(self):
         method = self.method = config.Method(None, 'label', [
