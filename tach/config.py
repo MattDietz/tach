@@ -208,7 +208,6 @@ class Method(object):
                 self.additional[option] = value
 
             # Add app to required if necessary
-            print self._app_helper
             if option == 'app' and not self._app_helper:
                 required.add('app_helper')
 
@@ -220,16 +219,13 @@ class Method(object):
         # Grab the method we're operating on
         method_cls = utils.import_class_or_module(self._module)
         if inspect.ismodule(method_cls):
-            print "IS MODULE"
             that_method = raw_method = getattr(method_cls, self._method)
             kind = 'function'
         else:
-            print "IS METHOD"
             that_method, raw_method, kind = _get_method(method_cls,
                                                         self._method)
         self._method_cache = that_method
 
-        print "Method", that_method, "Orig:", raw_method, self._method
         # We need to wrap the replacement if it's a static or class
         # method
         if kind == 'static method':
@@ -240,9 +236,8 @@ class Method(object):
             meth_wrap = lambda f: f
 
         # Wrap the method to perform statistics collection
-        #@functools.wraps(that_method)
+        @functools.wraps(that_method)
         def wrapper(*args, **kwargs):
-            print "WRAPPER IN"
             # Deal with class method calling conventions
             if kind == 'class method':
                 args = args[1:]
@@ -254,15 +249,11 @@ class Method(object):
 
             # Run the method, bracketing with statistics collection
             # and notification
-            print "CALLING METRIC START"
             value = self.metric.start()
-            print "METHOD START", that_method, args, kwargs
             result = that_method(*args, **kwargs)
-            print "METHOD STOP"
             self.notifier(self.metric(value), self.metric.vtype,
                           label or self.label)
 
-            print "WRAPPER OUT"
             return result
 
         # Save some introspecting data
@@ -277,7 +268,6 @@ class Method(object):
         setattr(self._method_cls, self._method, self._method_wrapper)
 
     def detach(self):
-        print "DETACH"
         setattr(self._method_cls, self._method, self._method_orig)
 
     def __getitem__(self, key):
@@ -288,7 +278,6 @@ class Method(object):
     @property
     def method(self):
         """Return the actual method."""
-        print "METHOD PROPERTY"
         return self._method_cache
 
     @property
@@ -308,19 +297,14 @@ class Method(object):
     def metric(self):
         """Return an initialized statistic object."""
 
-        print "METRIC PROPERTY IN"
         if not self._metric_cache:
             # Select an appropriate statistic
             cls = utils.import_class_or_module(self._metric)
             self._metric_cache = cls(self.additional)
 
-        print "METRIC PROPERTY OUT"
         return self._metric_cache
 
     @property
     def notifier(self):
         """Return the notifier driver."""
-        print "NOTIFIER IN"
-        x = self.config.notifier(self._notifier)
-        print "NOTIFIER OUT"
-        return x
+        return self.config.notifier(self._notifier)

@@ -14,28 +14,21 @@ class FakeConfig(object):
     _notifier = None
 
     def notifier(self, name):
-        print "FAKE CONFIG NOTIFIER IN"
         if not self._notifier:
             self._notifier = FakeNotifier(self)
-        x = self._notifier
-        print "FAKE CONFIG NOTIFIER OUT"
-        return x
+        return self._notifier
 
 
 class FakeNotifier(notifiers.BaseNotifier):
     def __init__(self, config):
-        print "FAKE NOTIFIER IN"
         super(FakeNotifier, self).__init__(config)
 
         self.sent_msgs = []
-        print "FAKE NOTIFIER OUT"
 
     def default(self, value, label):
-        print "DEFAULT"
         return 'default/%r/%r' % (value, label)
 
     def send(self, body):
-        print "SEND"
         self.sent_msgs.append(body)
 
 
@@ -43,43 +36,28 @@ class FakeMetric(metrics.Metric):
     vtype = 'fake'
 
     def __init__(self, config):
-        print "FAKE METRIC INIT >"
         super(FakeMetric, self).__init__(config)
 
         self.config = config
-        print "FAKE METRIC INIT <"
 
     def start(self):
-        print "START"
         return "started"
 
     def __call__(self, value):
-        print "METRIC CALL IN"
-        x = "%s/ended" % value
-        print "METRIC CALL OUT"
-        return x
+        return "%s/ended" % value
 
 
 class FakeClass(object):
     def instance_method(self, *args, **kwargs):
-        print "METHOD IN"
-        x = 'method', dict(args=args, kwargs=kwargs)
-        print "METHOD OUT"
-        return x
+        return 'method', dict(args=args, kwargs=kwargs)
 
     @classmethod
     def class_method(cls, *args, **kwargs):
-        print "CLASS IN"
-        x = 'class', dict(args=args, kwargs=kwargs)
-        print "CLASS OUT"
-        return x
+        return 'class', dict(args=args, kwargs=kwargs)
 
     @staticmethod
     def static_method(*args, **kwargs):
-        print "STATIC IN"
-        x = 'static', dict(args=args, kwargs=kwargs)
-        print "STATIC OUT"
-        return x
+        return 'static', dict(args=args, kwargs=kwargs)
 
 
 class FakeHelper(object):
@@ -367,6 +345,11 @@ class TestMethod(tests.TestCase):
                     ('method', 'instance_method')])
 
     def test_init(self):
+        # We have to grab these here, because we can't look for them
+        # after they've been monkey-patched.
+        original = FakeClass.__dict__['instance_method']
+        original_method = FakeClass.instance_method
+
         method = self.method = config.Method('config', 'label', [
                 ('module', 'FakeClass'),
                 ('method', 'instance_method'),
@@ -375,7 +358,6 @@ class TestMethod(tests.TestCase):
                 ('app_helper', 'FakeHelper'),
                 ('app', 'fake_helper'),
                 ('foo', 'bar')])
-
         self.assertEqual(method.config, 'config')
         self.assertEqual(method.label, 'label')
         self.assertEqual(method._app_cache, None)
@@ -389,13 +371,10 @@ class TestMethod(tests.TestCase):
         self.assertEqual(method._app, 'fake_helper')
         self.assertEqual(method._method_cls, FakeClass)
         self.assertTrue(inspect.isfunction(method._method_wrapper))
-        ###### TODO
-        #self.assertEqual(method._method_orig,
-        #                 FakeClass.__dict__['instance_method'])
+        self.assertEqual(method._method_orig, original)
         self.assertEqual(method._method_wrapper.tach_descriptor, method)
-        ###### TODO
-        #self.assertEqual(method._method_wrapper.tach_function,
-        #                 FakeClass.instance_method)
+        self.assertEqual(method._method_wrapper.tach_function,
+                         original_method)
 
     def test_init_class(self):
         method = self.method = config.Method(None, 'label', [
@@ -405,7 +384,6 @@ class TestMethod(tests.TestCase):
 
         self.assertEqual(method._method_cls, FakeClass)
         self.assertIsInstance(method._method_wrapper, classmethod)
-        #### TODO
         #self.assertEqual(method._method_orig,
         #                 FakeClass.__dict__['class_method'])
 
@@ -417,9 +395,10 @@ class TestMethod(tests.TestCase):
 
         self.assertEqual(method._method_cls, FakeClass)
         self.assertIsInstance(method._method_wrapper, staticmethod)
-        ##### TODO
-        #self.assertEqual(method._method_orig,
-        #                 FakeClass.__dict__['static_method'])
+
+        method.detach()
+        self.assertEqual(method._method_orig, 
+                                    FakeClass.__dict__['static_method'])
 
     def test_init_function(self):
         method = self.method = config.Method(None, 'label', [
@@ -429,8 +408,9 @@ class TestMethod(tests.TestCase):
 
         self.assertEqual(method._method_cls, fake_module)
         self.assertTrue(inspect.isfunction(method._method_wrapper))
-        #### TODO
-        # self.assertEqual(method._method_orig, fake_module.function)
+
+        method.detach()
+        self.assertEqual(method._method_orig, fake_module.function)
 
     def test_additional_config(self):
         method = self.method = config.Method(None, 'label', [
