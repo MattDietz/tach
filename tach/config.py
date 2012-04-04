@@ -307,5 +307,5 @@ class Method(object):
     @property
     def notifier(self):
         """Return the notifier driver."""
-        
+
         return self.config.notifier(self._notifier)
