@@ -221,3 +221,7 @@ class TestStackTachNotifier(tests.TestCase):
                                     dict(url='http://example.com:1234/data'))
         payload = notifier.exec_time(12.3456789, "label_{%TX_ID%}")
         self.assertEqual(payload, '["label_1", 12.345678899999999]')
+
+        notifier.bump_transaction_id()
+        payload = notifier.exec_time(12.3456789, "label_{%TX_ID%}")
+        self.assertEqual(payload, '["label_2", 12.345678899999999]')
