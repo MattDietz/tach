@@ -247,6 +247,8 @@ class Method(object):
 
             # Run the method, bracketing with statistics collection
             # and notification
+            if self.metric.bump_transaction_id:
+                self.notifier.bump_transaction_id()
             value = self.metric.start()
             result = that_method(*args, **kwargs)
             self.notifier(self.metric(value), self.metric.vtype,

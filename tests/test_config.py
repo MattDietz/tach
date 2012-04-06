@@ -492,3 +492,15 @@ class TestMethod(tests.TestCase):
                 ('metric', 'FakeMetric')])
 
         self.assertIsInstance(method.notifier, FakeNotifier)
+
+    def test_get_transaction_id(self):
+        method = self.method = config.Method(FakeConfig(), 'label', [
+                ('module', 'FakeClass'),
+                ('method', 'instance_method'),
+                ('metric', 'FakeMetric')])
+        self.assertTrue('_bump_transaction_id' in method.metric.__dict__)
+        method.metric._bump_transaction_id = True
+        self.assertEquals(method.notifier.transaction_id, 1)
+        instance = FakeClass()
+        instance.instance_method()
+        self.assertEquals(method.notifier.transaction_id, 2)

@@ -41,6 +41,12 @@ class TestBaseNotifier(tests.TestCase):
 
         self.assertEqual(notifier.sent_msg, "test/'result'/'label'")
 
+    def test_bump_transaction_id(self):
+        notifier = NotifierTest({})
+        self.assertEqual(notifier.transaction_id, 1)
+        notifier.bump_transaction_id()
+        self.assertEqual(notifier.transaction_id, 2)
+
 
 class TestDebugNotifier(tests.LoggingTestCase):
     imports = {'NotifierTest': NotifierTest}
@@ -201,3 +207,21 @@ class TestStatsDNotifier(TestSocketNotifierBase):
         result = notifier.increment(2, 'label')
 
         self.assertEqual(result, 'label:2|c')
+
+
+class TestStackTachNotifier(tests.TestCase):
+    def test_exec_time(self):
+        notifier = notifiers.StackTachNotifier(
+                                    dict(url='http://example.com:1234/data'))
+        payload = notifier.exec_time(12.3456789, "label")
+        self.assertEqual(payload, '["label", 12.345678899999999]')
+
+    def test_exec_time_with_txid(self):
+        notifier = notifiers.StackTachNotifier(
+                                    dict(url='http://example.com:1234/data'))
+        payload = notifier.exec_time(12.3456789, "label_{%TX_ID%}")
+        self.assertEqual(payload, '["label_1", 12.345678899999999]')
+
+        notifier.bump_transaction_id()
+        payload = notifier.exec_time(12.3456789, "label_{%TX_ID%}")
+        self.assertEqual(payload, '["label_2", 12.345678899999999]')

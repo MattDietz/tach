@@ -5,6 +5,21 @@ from tach import metrics
 import tests
 
 
+
+class TestBase(tests.TestCase):
+    def test_transaction_id_default(self):
+        metric = metrics.Metric({})
+        self.assertFalse(metric.bump_transaction_id)
+
+    def test_transaction_id_true(self):
+        metric = metrics.Metric(dict(bump_transaction_id=1))
+        self.assertTrue(metric.bump_transaction_id)
+
+    def test_transaction_id_false(self):
+        metric = metrics.Metric(dict(bump_transaction_id=0))
+        self.assertFalse(metric.bump_transaction_id)
+
+
 class TestExecTime(tests.TestCase):
     def test_function(self):
         metric = metrics.ExecTime({})
