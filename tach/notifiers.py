@@ -1,4 +1,5 @@
 import logging
+import json
 import socket
 import time
 
@@ -16,8 +17,14 @@ class BaseNotifier(object):
 
         Saves the configuration for later use.
         """
-
+        super(BaseNotifier, self).__init__()
         self.config = config
+        self.transaction_id = 1
+
+    def bump_transaction_id(self):
+        """Bump the transaction ID. Any metrics that use this notifier
+        can bundle messages under a single transaction ID."""
+        self.transaction_id += 1
 
     def format(self, value, vtype, label):
         """Format the value.
@@ -216,3 +223,30 @@ class StatsDNotifier(SocketNotifier):
         """Format increment/decrement."""
 
         return "%s:%s|c" % (label, value)
+
+
+class WebServiceNotifier(BaseNotifier):
+    """Base class for notifiers that talk to web services."""
+
+    def __init__(self, config):
+        """Initialize the urllib2 connection."""
+
+        super(WebServiceNotifier, self).__init__(config)
+        self.url = config['url']
+
+    def send(self, body):
+        cooked_data = urllib.urlencode(payload)
+        req = urllib2.Request(self.url, cooked_data)
+        response = urllib2.urlopen(req)
+        return response.read()
+
+
+class StackTachNotifier(WebServiceNotifier):
+    """Talk to the StackTach web service."""
+
+    def exec_time(self, value, label):
+        """Format execution time."""
+
+        routing_key = label.replace("{%TX_ID%}", str(self.transaction_id))
+        payload = (routing_key, value)
+        return json.dumps(payload)

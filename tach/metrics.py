@@ -20,9 +20,12 @@ class Metric(object):
 
     def __init__(self, config):
         """Initialize the metric from the configuration."""
+        self._bump_transaction_id = int(
+                                    config.get('bump_transaction_id', 0)) > 0
 
-        # By default, do nothing
-        pass
+    @property
+    def bump_transaction_id(self):
+        return self._bump_transaction_id
 
     def start(self):
         """Start collecting the metric."""
