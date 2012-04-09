@@ -3,13 +3,16 @@ def queue_receive(*args, **kwargs):
     method = args[2]
     return args, kwargs, "nova.compute.%s" % method
 
+
 def network_queue_receive(*args, **kwargs):
     method = args[2]
     return args, kwargs, "nova.network.%s" % method
 
+
 def scheduler_queue_receive(*args, **kwargs):
     method = args[2]
     return args, kwargs, "nova.scheduler.%s" % method
+
 
 def process_stack(*args, **kwargs):
     resource = args[0]
@@ -22,4 +25,3 @@ def process_stack(*args, **kwargs):
     else:
         key = 'nova.api%s%s%s' % (path, method)
     return args, kwargs, key
-
