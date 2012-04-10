@@ -14,13 +14,11 @@ sys.path.insert(0, os.path.abspath(os.curdir))
 import tach
 
 if __name__ == '__main__':
-    config_path = sys.argv[1]
-    script_path = sys.argv[2]
-
     # Move the argv indices back two so the proper cmdline is passed
     # to the target program.
-    del sys.argv[0]
-    del sys.argv[1]
+    tach_executable = sys.argv.pop(0)
+    config_path = sys.argv.pop(0)
+    script_path = sys.argv[0]
 
     tach.patch(config_path)
     execfile(script_path)

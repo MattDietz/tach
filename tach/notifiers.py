@@ -2,6 +2,8 @@ import logging
 import json
 import socket
 import time
+import urllib
+import urllib2
 
 from tach import utils
 
@@ -235,10 +237,14 @@ class WebServiceNotifier(BaseNotifier):
         self.url = config['url']
 
     def send(self, body):
-        cooked_data = urllib.urlencode(payload)
-        req = urllib2.Request(self.url, cooked_data)
-        response = urllib2.urlopen(req)
-        return response.read()
+        try:
+            cooked_data = urllib.urlencode(body)
+            req = urllib2.Request(self.url, cooked_data)
+            response = urllib2.urlopen(req)
+            return response.read()
+        except Exception, e:
+            LOG.debug("****** EXCEPTION %s" % e)
+            return None
 
 
 class StackTachNotifier(WebServiceNotifier):
