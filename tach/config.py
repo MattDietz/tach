@@ -192,7 +192,12 @@ class Method(object):
 
         # Other important configuration values
         required = set(['module', 'method', 'metric'])
-        attrs = set(['notifier', 'app', 'app_helper']) | required
+        attrs = set(['notifier', 'app']) | required
+
+        # if there's a global helper set, we don't require a local one
+        if not self._app_helper:
+            attrs.add('app_helper')
+
         for attr in attrs:
             setattr(self, '_' + attr, None)
         self.additional = {}
