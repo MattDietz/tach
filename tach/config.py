@@ -24,10 +24,18 @@ class Config(object):
         config = ConfigParser.SafeConfigParser()
         config.read(config_path)
         app_helper = None
+        setup_module = None
         # Process configuration
         if config.has_section('global'):
             app_helper = config.get('global', 'app_helper')
+            setup_module = config.get('global', 'setup_module')
             config.remove_section('global')
+
+        if setup_module:
+            # import this first to do env setup
+            mod = __import__(setup_module)
+            print "Environment setup module: %s" % mod
+            
         for sec in config.sections():
             if sec == 'notifier' or sec.startswith('notifier:'):
                 # Make a notifier
